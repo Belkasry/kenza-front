@@ -35,6 +35,11 @@
           clearable
           color="primary">
         </v-autocomplete>
+        <v-btn color="yellow"
+               class="p-2 ml-2 mt-2" @click="dialogFige=true">
+          <v-icon>mdi-application-cog-outline</v-icon>
+          Config Vals Figés
+        </v-btn>
         <v-btn color="info"
                class="p-2 ml-2 mt-2" @click="dialogVisible=true">
           <v-icon>application-cog-outline</v-icon>
@@ -42,6 +47,68 @@
         </v-btn>
         <v-btn color="success" class="ml-2 p-2 mt-2" @click="exportToExcel">Export to Excel</v-btn>
       </v-card-title>
+      <v-dialog v-model="dialogFige"
+                fullscreen
+                :scrim="false"
+                transition="dialog-bottom-transition">
+        <v-toolbar
+          dark
+          color="primary"
+        >
+          <v-btn
+            icon
+            @click="dialogFige = false"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>Settings Valeurs figés</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-toolbar-items>
+            <v-btn @click="configValFige">Save</v-btn>
+            <v-btn color="secondary" @click="dialogFige = false">Cancel</v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
+        <v-card>
+          <v-card-title>
+            <span class="headline">Edit Template Keys</span>
+          </v-card-title>
+          <v-card-text>
+            <v-row>
+              <v-col>
+                <v-text-field label="Key" v-model="newKey.key"></v-text-field>
+              </v-col>
+              <v-col>
+                <v-text-field label="Label" v-model="newKey.label"></v-text-field>
+              </v-col>
+              <v-col>
+                <v-switch label="Figé" v-model="newKey.fige"></v-switch>
+              </v-col>
+              <v-col>
+                <v-btn color="primary" icon @click="addRow">
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+            <v-row v-for="(key, index) in templateKeys" :key="index">
+              <v-col>
+                <v-text-field v-model="key.key" readonly></v-text-field>
+              </v-col>
+              <v-col>
+                <v-text-field v-model="key.label"></v-text-field>
+              </v-col>
+              <v-col>
+                <v-switch v-model="key.fige" color="success"></v-switch>
+              </v-col>
+              <v-col>
+                <v-btn color="error" icon @click="deleteRow(index)">
+                  <v-icon>mdi-delete</v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+
+      </v-dialog>
       <v-dialog v-model="dialogVisible"
                 fullscreen
                 :scrim="false"
@@ -95,7 +162,10 @@
         </v-card>
       </v-dialog>
     </v-card>
-    <v-data-table :search="search" v-if="headers" color="primary" :headers="headers" :items="items"
+    <v-data-table :search="search"
+                  v-if="headers" color="primary"
+                  :headers="headers"
+                  :items="items"
                   density="compact"></v-data-table>
 
   </div>
@@ -111,6 +181,12 @@ export default {
   },
   data() {
     return {
+      newKey: {
+        key: '',
+        label: '',
+        fige: false
+      },
+      dialogFige: false,
       availableMappings: [],
       selectedMapping: null,
       dialogSaveMap: false,
@@ -144,6 +220,27 @@ export default {
   }
   ,
   methods: {
+    addRow() {
+      this.templateKeys.push({
+        key: this.newKey.key,
+        label: this.newKey.label,
+        fige: this.newKey.fige
+      });
+      this.newKey = { key: '', label: '', fige: false };
+    },
+    deleteRow(index) {
+      this.templateKeys.splice(index, 1);
+    },
+    configValFige() {
+      axios.post(this.api_path + '/template', {data: this.templateKeys})
+        .then(response => {
+          console.log(response.data.message);
+        })
+        .catch(error => {
+          console.error(error.response.data.message);
+        });
+
+    },
     exportToExcel() {
       axios.post(this.api_path + '/export', {
         data: this.items,
@@ -188,7 +285,6 @@ export default {
     }
     ,
     async saveMappingConfig() {
-      console.log(this.mappings)
       await axios
         .post(this.api_path + "/config", {
           name: this.mappingName,
@@ -197,12 +293,14 @@ export default {
         .then((response) => {
           console.log(response.data);
           this.dialogSaveMap = false;
+          this.dialogVisible = false;
           this.mappingName = "";
           this.selectedHeaders = {};
         })
         .catch((error) => {
           console.error(error);
         });
+      this.loadAvailableMappings();
     }
     ,
     async fetchTemplateKeys() {
