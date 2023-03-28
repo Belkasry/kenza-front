@@ -1,38 +1,46 @@
 <template>
-  <v-container>
-    <v-card class="m-5 mb-6 p-4">
+  <div class="bg-indigo-accent-1 px-4">
+    <v-card class="pt-3 px-2">
       <v-form @submit.prevent="submitCsv" class="d-flex">
         <v-file-input
           v-model="csvFile"
-          :label="'Select a CSV file'"
+          color="deep-purple-accent-4"
+          label="CSV"
+          placeholder="Select your files"
+          prepend-icon="mdi-paperclip"
+          variant="outlined"
+          :show-size="1000"
           :rules="[csvFile => !!csvFile || 'CSV file is required']"
           accept=".csv"
         ></v-file-input>
 
-        <v-btn color="primary" class="float-right mt-3 ml-4" type="submit">Upload</v-btn>
+        <v-btn color="primary" class="float-right mt-2 mx-3" type="submit">Upload</v-btn>
       </v-form>
-    </v-card>
-
-    <v-card>
       <v-card-title class="d-flex">
         <v-text-field
+          variant="outlined"
           v-model="search"
-          append-icon="mdi-magnify"
+          prepend-inner-icon="mdi-magnify"
           label="Search"
-          single-line
-          class="p-2 mr-4"
           hide-details
+          class="mx-2"
+          density="compact"
         ></v-text-field>
-        <v-select
-          item-text="filename" item-value="mappings"
-          v-model="selectedMapping" :items="availableMappings" class="mt-5 mr-4" label="Select a mapping" clearable
-          color="secondary"></v-select>
+        <v-autocomplete
+          :items="availableMappings"
+          v-model="selectedMapping"
+          item-title="filename"
+          return-object
+          label="Select a mapping"
+          clearable
+          color="primary">
+        </v-autocomplete>
         <v-btn color="info"
-               class="p-2 ml-2" @click="dialogVisible=true">
+               class="p-2 ml-2 mt-2" @click="dialogVisible=true">
           <v-icon>application-cog-outline</v-icon>
           Config Export
         </v-btn>
-        <v-btn color="success" class="ml-2 p-2" @click="exportToExcel">Export to Excel</v-btn>
+        <v-btn color="success" class="ml-2 p-2 mt-2" @click="exportToExcel">Export to Excel</v-btn>
       </v-card-title>
       <v-dialog v-model="dialogVisible"
                 fullscreen
@@ -44,7 +52,6 @@
         >
           <v-btn
             icon
-            dark
             @click="dialogVisible = false"
           >
             <v-icon>mdi-close</v-icon>
@@ -56,11 +63,11 @@
             <v-btn color="secondary" @click="dialogVisible = false">Cancel</v-btn>
           </v-toolbar-items>
         </v-toolbar>
-        <v-card>
+        <v-card class="pb-4">
           <v-card-title color="primary">
             Mapping
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="py-5">
             <v-row>
               <v-col v-for="(key, index) in templateKeys" :key="index" :cols="4">
                 <label>{{ key.label }}</label>
@@ -69,7 +76,7 @@
               </v-col>
             </v-row>
           </v-card-text>
-
+          <div class="mb-9"></div>
         </v-card>
       </v-dialog>
       <v-dialog v-model="dialogSaveMap">
@@ -79,23 +86,29 @@
             <v-text-field v-model="mappingName" label="Mapping name"></v-text-field>
           </v-card-text>
           <v-card-actions>
-            <v-btn @click="dialogSaveMap = false">Cancel</v-btn>
-            <v-btn @click="saveMappingConfig">
+            <v-btn @click="dialogSaveMap = false" color="light">Cancel</v-btn>
+            <v-btn @click="saveMappingConfig" color="success">
               <v-icon>mdi-save</v-icon>
               Save
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-data-table :search="search" v-if="headers" color="primary" :headers="headers" :items="items"></v-data-table>
     </v-card>
-  </v-container>
+    <v-data-table :search="search" v-if="headers" color="primary" :headers="headers" :items="items"
+                  density="compact"></v-data-table>
+
+  </div>
 </template>
 
 <script>
 import axios from 'axios';
+import {VDataTable} from "vuetify/labs/components";
 
 export default {
+  components: {
+    VDataTable
+  },
   data() {
     return {
       availableMappings: [],
@@ -111,12 +124,13 @@ export default {
       items: [],
       templateKeys: [],
       selectedHeaders: {},
+      api_path: "http://localhost:8000/api"
     };
   },
   watch: {
     selectedMapping(val) {
       const selectedHeaders = {};
-      for (const key of val) {
+      for (const key of val.mappings) {
         selectedHeaders[key.templateKey] = key.headerKey;
       }
       this.selectedHeaders = selectedHeaders;
@@ -131,9 +145,9 @@ export default {
   ,
   methods: {
     exportToExcel() {
-      axios.post('https://kenza-amazon.herokuapp.com/public/index.php/api/export', {
+      axios.post(this.api_path + '/export', {
         data: this.items,
-        mapping: this.selectedMapping,
+        mapping: this.selectedMapping.mappings,
         template: this.templateKeys,
       }, {
         responseType: 'blob'
@@ -148,9 +162,9 @@ export default {
         console.error(error);
       });
     },
-    loadAvailableMappings() {
-      axios
-        .get("https://kenza-amazon.herokuapp.com/public/index.php/api/mappings")
+    async loadAvailableMappings() {
+      await axios
+        .get(this.api_path + "/mappings")
         .then((response) => {
           this.availableMappings = response.data;
         })
@@ -175,8 +189,8 @@ export default {
     ,
     async saveMappingConfig() {
       console.log(this.mappings)
-      axios
-        .post("https://kenza-amazon.herokuapp.com/public/index.php/api/config", {
+      await axios
+        .post(this.api_path + "/config", {
           name: this.mappingName,
           mappings: this.mappings,
         })
@@ -192,7 +206,7 @@ export default {
     }
     ,
     async fetchTemplateKeys() {
-      const response = await axios.get('https://kenza-amazon.herokuapp.com/public/index.php/api/template')
+      const response = await axios.get(this.api_path + '/template')
       this.templateKeys = response.data;
     }
     ,
@@ -200,10 +214,10 @@ export default {
 
       let config = {
         method: 'get',
-        url: 'https://kenza-amazon.herokuapp.com/public/index.php/api/csv-to-json',
+        url: this.api_path + '/csv-to-json',
       };
 
-      axios.request(config)
+      await axios.request(config)
         .then((response) => {
           this.headers = response.data.headers
           this.items = response.data.items
@@ -216,19 +230,20 @@ export default {
     ,
     async submitCsv() {
       const formData = new FormData()
-      formData.append('csv', this.csvFile)
+      Array.from(this.csvFile).forEach(file => {
+        formData.append('csv', file);
+      });
+      await axios.post(this.api_path + '/csv', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+        .catch((error) => {
+          console.log(error);
+        });
 
-      try {
-        const response = await axios.post('https://kenza-amazon.herokuapp.com/public/index.php/api/csv', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
+      this.fetchTable();
 
-        this.fetchTable();
-      } catch (error) {
-        console.error(error)
-      }
     }
     ,
     exportData() {
@@ -250,9 +265,8 @@ export default {
 ;
 </script>
 <style>
-.v-data-table thead {
-  font-size: 1.3rem;
-  background-color: #e9dd1785;
-  color: white;
+.v-data-table {
+  font-size: 0.7rem;
+  color: #222;
 }
 </style>
