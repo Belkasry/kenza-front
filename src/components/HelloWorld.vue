@@ -215,7 +215,7 @@ export default {
       items: [],
       templateKeys: [],
       selectedHeaders: {},
-      api_path: "http://kenza-api.herokuapp.com/public/index.php/api"
+      api_path: "https://kenza-api.herokuapp.com/public/index.php/api"
     };
   },
   watch: {
