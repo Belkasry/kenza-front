@@ -1,6 +1,7 @@
 <template>
   <div class="bg-indigo-accent-1 px-4">
-    <v-card class="pt-3 px-2">
+    <v-card class="pt-3 px-2 mt-2" style="background: #561dc7;
+    color: white; margin-top: 20px !important;">
       <v-form @submit.prevent="submitCsv" class="d-flex">
         <v-file-input
           v-model="csvFile"
@@ -162,6 +163,20 @@
         </v-card>
       </v-dialog>
     </v-card>
+    <div class="d-flex flex-grow-1 justify-center">
+      <v-btn icon @click="scroll(1)" class="mr-2 mt-1" size="x-small">
+        <v-icon>mdi-page-first</v-icon>
+      </v-btn>
+      <v-btn icon @click="scroll(2)" class="mr-2 mt-1" size="x-small">
+        <v-icon>mdi-chevron-left</v-icon>
+      </v-btn>
+      <v-btn icon @click="scroll(3)" class="mr-2 mt-1" size="x-small">
+        <v-icon>mdi-chevron-right</v-icon>
+      </v-btn>
+      <v-btn icon @click="scroll(4)" class="mr-2 mt-1" size="x-small">
+        <v-icon>mdi-page-last</v-icon>
+      </v-btn>
+    </div>
     <v-data-table :search="search"
                   v-if="headers" color="primary"
                   :headers="headers"
@@ -220,6 +235,31 @@ export default {
   }
   ,
   methods: {
+    scroll(direction) {
+      const table = this.$el.querySelector(".v-table__wrapper");
+      let scrollGoal = 0;
+      if (direction == 2)
+        scrollGoal = (table.scrollWidth - table.clientWidth) / 3;
+      else if (direction == 3)
+        scrollGoal = (2 * (table.scrollWidth - table.clientWidth)) / 3;
+      else if (direction == 4)
+        scrollGoal = table.scrollWidth - table.clientWidth;
+      table.scroll({
+        left: scrollGoal,
+        behavior: "smooth",
+      });
+      // table.classList.add("d-none");
+      // const tableWidth = table.offsetWidth;
+      // const tableScrollWidth = table.scrollWidth;
+      // const scrollAmount = tableWidth / 2;
+      // let newScrollX = this.scrollX + direction * scrollAmount;
+      // if (newScrollX < 0) {
+      //   newScrollX = 0;
+      // } else if (newScrollX > tableScrollWidth - tableWidth) {
+      //   newScrollX = tableScrollWidth - tableWidth;
+      // }
+      // this.scrollX = newScrollX;
+    },
     addRow() {
       this.templateKeys.push({
         key: this.newKey.key,
@@ -364,7 +404,12 @@ export default {
 </script>
 <style>
 .v-data-table {
+  margin-top: 10px;
   font-size: 0.7rem;
   color: #222;
+}
+.v-table > .v-table__wrapper > table > tbody > tr > th, .v-table > .v-table__wrapper > table > thead > tr > th, .v-table > .v-table__wrapper > table > tfoot > tr > th {
+  background: mediumpurple;
+  color: white;
 }
 </style>
