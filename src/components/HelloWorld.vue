@@ -242,7 +242,7 @@ export default {
       items: [],
       templateKeys: [],
       selectedHeaders: {},
-      api_path: "http://127.0.0.1:8001/api"
+      api_path: "https://kenza-api.herokuapp.com/public/index.php/api"
     };
   },
 
