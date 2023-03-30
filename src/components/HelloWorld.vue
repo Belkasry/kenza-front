@@ -84,6 +84,14 @@
               <v-col>
                 <v-switch label="Figé" v-model="newKey.fige"></v-switch>
               </v-col>
+              <v-text-field
+                label="Valeur Figée"
+                v-if="newKey.fige"
+                v-model="newKey.default"
+              ></v-text-field>
+              <v-spacer
+                v-else
+              ></v-spacer>
               <v-col>
                 <v-btn color="primary" icon @click="addRow">
                   <v-icon>mdi-plus</v-icon>
@@ -100,6 +108,14 @@
               <v-col>
                 <v-switch v-model="key.fige" color="success"></v-switch>
               </v-col>
+              <v-text-field
+                v-if="key.fige"
+                v-model="key.default"
+                label="Valeur Figée"
+              ></v-text-field>
+              <v-spacer
+                v-else
+              ></v-spacer>
               <v-col>
                 <v-btn color="error" icon @click="deleteRow(index)">
                   <v-icon>mdi-delete</v-icon>
@@ -139,8 +155,9 @@
             <v-row>
               <v-col v-for="(key, index) in templateKeys" :key="index" :cols="4">
                 <label>{{ key.label }}</label>
-                <v-autocomplete v-model="selectedHeaders[key.key]" :items="getHeadersForTemplateKey(key.key)"
+                <v-autocomplete v-if="!key.fige" v-model="selectedHeaders[key.key]" :items="getHeadersForTemplateKey(key.key)"
                                 label="Select a field to map" clearable></v-autocomplete>
+                <v-text-field label="Valeur figée" v-else :model-value="key.default" disabled></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
@@ -199,7 +216,8 @@ export default {
       newKey: {
         key: '',
         label: '',
-        fige: false
+        fige: false,
+        default: ''
       },
       dialogFige: false,
       availableMappings: [],
@@ -264,9 +282,10 @@ export default {
       this.templateKeys.push({
         key: this.newKey.key,
         label: this.newKey.label,
-        fige: this.newKey.fige
+        fige: this.newKey.fige,
+        default: this.newKey.default
       });
-      this.newKey = { key: '', label: '', fige: false };
+      this.newKey = {key: '', label: '', fige: false, default: ''};
     },
     deleteRow(index) {
       this.templateKeys.splice(index, 1);
@@ -408,6 +427,7 @@ export default {
   font-size: 0.7rem;
   color: #222;
 }
+
 .v-table > .v-table__wrapper > table > tbody > tr > th, .v-table > .v-table__wrapper > table > thead > tr > th, .v-table > .v-table__wrapper > table > tfoot > tr > th {
   background: mediumpurple;
   color: white;
