@@ -39,12 +39,12 @@
         <v-btn color="yellow"
                class="p-2 ml-2 mt-2" @click="dialogFige=true">
           <v-icon>mdi-application-cog-outline</v-icon>
-          Config Vals Figés
+          Header Excel Template
         </v-btn>
         <v-btn color="info"
                class="p-2 ml-2 mt-2" @click="dialogVisible=true">
-          <v-icon>application-cog-outline</v-icon>
-          Config Export
+          <v-icon>mdi-application-cog-outline</v-icon>
+          Mapping
         </v-btn>
         <v-btn color="success" class="ml-2 p-2 mt-2" @click="exportToExcel">Export to Excel</v-btn>
       </v-card-title>
