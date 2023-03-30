@@ -360,15 +360,12 @@ export default {
           console.error(error);
         });
       this.loadAvailableMappings();
-    }
-    ,
+    },
     async fetchTemplateKeys() {
       const response = await axios.get(this.api_path + '/template')
       this.templateKeys = response.data;
-    }
-    ,
+    },
     async fetchTable() {
-
       let config = {
         method: 'get',
         url: this.api_path + '/csv-to-json',
