@@ -15,27 +15,12 @@
           accept=".csv"
         ></v-file-input>
 
-        <v-btn color="primary" class="float-right mt-2 mx-3" type="submit">Upload</v-btn>
+        <v-btn color="primary" class="float-right mt-2 mx-3" type="submit">
+          <v-icon>mdi-upload</v-icon>
+          Upload
+        </v-btn>
       </v-form>
-      <v-card-title class="d-flex">
-        <v-text-field
-          variant="outlined"
-          v-model="search"
-          prepend-inner-icon="mdi-magnify"
-          label="Search"
-          hide-details
-          class="mx-2"
-          density="compact"
-        ></v-text-field>
-        <v-autocomplete
-          :items="availableMappings"
-          v-model="selectedMapping"
-          item-title="filename"
-          return-object
-          label="Select a mapping"
-          clearable
-          color="primary">
-        </v-autocomplete>
+      <div class="d-flex justify-end flex-sm-row flex-column">
         <v-btn color="yellow"
                class="p-2 ml-2 mt-2" @click="dialogFige=true">
           <v-icon>mdi-application-cog-outline</v-icon>
@@ -43,11 +28,14 @@
         </v-btn>
         <v-btn color="info"
                class="p-2 ml-2 mt-2" @click="dialogVisible=true">
-          <v-icon>mdi-application-cog-outline</v-icon>
+          <v-icon>mdi-set-center-right</v-icon>
           Mapping
         </v-btn>
-        <v-btn color="success" class="ml-2 p-2 mt-2" @click="exportToExcel">Export to Excel</v-btn>
-      </v-card-title>
+        <v-btn color="success" class="ml-2 p-2 mt-2" @click="exportToExcel">
+          <v-icon>mdi-file-excel</v-icon>
+          Export to Excel
+        </v-btn>
+      </div>
       <v-dialog v-model="dialogFige"
                 fullscreen
                 :scrim="false"
@@ -69,14 +57,14 @@
             <v-btn color="secondary" @click="dialogFige = false">Cancel</v-btn>
           </v-toolbar-items>
         </v-toolbar>
-        <v-card>
+        <v-card style="background: #f0f7ff">
           <v-card-title>
             <span class="headline">Edit Template Keys</span>
           </v-card-title>
           <v-card-text>
             <v-row>
               <v-col>
-                <v-text-field label="Key" v-model="newKey.key"></v-text-field>
+                <v-text-field label="Key" v-model="computedKey" disabled></v-text-field>
               </v-col>
               <v-col>
                 <v-text-field label="Label" v-model="newKey.label"></v-text-field>
@@ -155,7 +143,8 @@
             <v-row>
               <v-col v-for="(key, index) in templateKeys" :key="index" :cols="4">
                 <label>{{ key.label }}</label>
-                <v-autocomplete v-if="!key.fige" v-model="selectedHeaders[key.key]" :items="getHeadersForTemplateKey(key.key)"
+                <v-autocomplete v-if="!key.fige" v-model="selectedHeaders[key.key]"
+                                :items="getHeadersForTemplateKey(key.key)"
                                 label="Select a field to map" clearable></v-autocomplete>
                 <v-text-field label="Valeur figée" v-else :model-value="key.default" disabled></v-text-field>
               </v-col>
@@ -179,21 +168,33 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+      <div class="d-flex flex-grow-1 justify-center my-4 flex-sm-row flex-column">
+        <v-text-field
+          variant="outlined"
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search"
+          hide-details
+          class="mx-2"
+          density="compact"
+        ></v-text-field>
+        <v-btn class="mr-2 mt-1" color="red" @click="items=[];headers=[];"><v-icon>mdi-delete</v-icon>Reset</v-btn>
+        <div class="mr-2 mt-1">
+        <v-btn icon @click="scroll(1)" class="mr-2 mt-1" size="x-small">
+          <v-icon>mdi-page-first</v-icon>
+        </v-btn>
+        <v-btn icon @click="scroll(2)" class="mr-2 mt-1" size="x-small">
+          <v-icon>mdi-chevron-left</v-icon>
+        </v-btn>
+        <v-btn icon @click="scroll(3)" class="mr-2 mt-1" size="x-small">
+          <v-icon>mdi-chevron-right</v-icon>
+        </v-btn>
+        <v-btn icon @click="scroll(4)" class="mr-2 mt-1" size="x-small">
+          <v-icon>mdi-page-last</v-icon>
+        </v-btn>
+        </div>
+      </div>
     </v-card>
-    <div class="d-flex flex-grow-1 justify-center">
-      <v-btn icon @click="scroll(1)" class="mr-2 mt-1" size="x-small">
-        <v-icon>mdi-page-first</v-icon>
-      </v-btn>
-      <v-btn icon @click="scroll(2)" class="mr-2 mt-1" size="x-small">
-        <v-icon>mdi-chevron-left</v-icon>
-      </v-btn>
-      <v-btn icon @click="scroll(3)" class="mr-2 mt-1" size="x-small">
-        <v-icon>mdi-chevron-right</v-icon>
-      </v-btn>
-      <v-btn icon @click="scroll(4)" class="mr-2 mt-1" size="x-small">
-        <v-icon>mdi-page-last</v-icon>
-      </v-btn>
-    </div>
     <v-data-table :search="search"
                   v-if="headers" color="primary"
                   :headers="headers"
@@ -210,6 +211,14 @@ import {VDataTable} from "vuetify/labs/components";
 export default {
   components: {
     VDataTable
+  },
+  computed: {
+    "computedKey"() {
+      return this.newKey.label
+        .toLowerCase()
+        .replace(/[\s]+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+    }
   },
   data() {
     return {
@@ -233,19 +242,10 @@ export default {
       items: [],
       templateKeys: [],
       selectedHeaders: {},
-      api_path: "https://kenza-api.herokuapp.com/public/index.php/api"
+      api_path: "http://127.0.0.1:8001/api"
     };
   },
-  watch: {
-    selectedMapping(val) {
-      const selectedHeaders = {};
-      for (const key of val.mappings) {
-        selectedHeaders[key.templateKey] = key.headerKey;
-      }
-      this.selectedHeaders = selectedHeaders;
-    }
 
-  },
   mounted() {
     this.fetchTable();
     this.fetchTemplateKeys();
@@ -323,6 +323,12 @@ export default {
         .get(this.api_path + "/mappings")
         .then((response) => {
           this.availableMappings = response.data;
+          this.selectedMapping = this.availableMappings.find(e => e.filename == "#mapping_name");
+          const selectedHeaders = {};
+          for (const key of this.selectedMapping.mappings) {
+            selectedHeaders[key.templateKey] = key.headerKey;
+          }
+          this.selectedHeaders = selectedHeaders;
         })
         .catch((error) => {
           console.error(error);
@@ -334,19 +340,15 @@ export default {
       return this.headers.filter((header) => !Object.values(this.selectedHeaders).includes(header.key) || header.key === this.selectedHeaders[templateKey]);
     }
     ,
-    saveMapping() {
+    async saveMapping() {
       const mappings = Object.entries(this.selectedHeaders).map(([templateKey, headerKey]) => ({
         templateKey,
         headerKey,
       }));
       this.mappings = mappings; // do something with the mappings
-      this.dialogSaveMap = true;
-    }
-    ,
-    async saveMappingConfig() {
       await axios
         .post(this.api_path + "/config", {
-          name: this.mappingName,
+          name: "#mapping_name",
           mappings: this.mappings,
         })
         .then((response) => {
